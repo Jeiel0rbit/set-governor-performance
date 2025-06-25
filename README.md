@@ -1,6 +1,8 @@
 # set-governor-performance
 > Force 'cpupower' to use the performance governor if it isn’t available in 'powerprofilesctl'.
-
+```
+curl -s https://raw.githubusercontent.com/Jeiel0rbit/set-governor-performance/refs/heads/main/set-governor-performance.sh | bash
+```
 Save the script to a file
 
 ```bash
@@ -78,3 +80,10 @@ Switch to the `performance` governor:
 ```bash 
 sudo cpupower frequency-set -g performance watch -n 1 "grep 'MHz' /proc/cpuinfo" 
 ```
+
+> [!warning]
+> You regret it? No problem. Run reverse script.
+```
+curl -s https://github.com/Jeiel0rbit/set-governor-performance/blob/main/reverter_governor.sh | bash
+```
+> Restart the machine.
