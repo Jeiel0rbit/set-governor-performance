@@ -1,11 +1,14 @@
 # set-governor-performance
 > Force 'cpupower' to use the performance governor if it isn’t available in 'powerprofilesctl'.
+
 ---> Quick step:
+
 ```
 curl -s https://raw.githubusercontent.com/Jeiel0rbit/set-governor-performance/refs/heads/main/set-governor-performance.sh | bash
 ```
 
 ---> Slow step:
+
 Save the script to a file
 
 ```bash
