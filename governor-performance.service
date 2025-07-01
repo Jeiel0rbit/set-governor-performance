@@ -1,0 +1,30 @@
+[Unit]
+Description=Set CPU governor to performance at boot
+Documentation=man:cpufreq-set(1)
+After=multi-user.target
+Wants=multi-user.target
+ConditionPathExists=/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/set-performance.service
+RemainAfterExit=yes
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=30
+
+# Security hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=no
+ProtectKernelTunables=no
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictRealtime=yes
+MemoryDenyWriteExecute=yes
+ReadWritePaths=/sys/devices/system/cpu
+
+[Install]
+WantedBy=multi-user.target
