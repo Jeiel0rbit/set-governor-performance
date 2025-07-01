@@ -33,7 +33,7 @@ readonly BLUE='\033[0;34m'
 readonly NC='\033[0m' # No Color
 
 # Constants
-readonly SERVICE_NAME="set-performance.service"
+readonly SERVICE_NAME="set-performance.sh"
 readonly SCRIPT_PATH="/usr/local/bin/${SERVICE_NAME}"
 readonly SERVICE_PATH="/etc/systemd/system/${SERVICE_NAME}"
 
@@ -111,7 +111,76 @@ check_governors() {
 configure_script() {
     print_step "[1/4] Setting up the script"
 
-    sudo cp ./set-performance.service $SCRIPT_PATH
+    sudo tee "$SCRIPT_PATH" > /dev/null << 'EOF'
+#!/bin/bash
+# Make the CPU governor 'performance' permanent
+
+# To immediately return any error code
+set -euo pipefail
+
+# Logger function
+log_message() {
+    logger -t "cpu-governor" "$1"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1"
+}
+
+# Function to set governor for all CPUs
+set_performance_governor() {
+    local cpu_count=0
+    local success_count=0
+    
+    # Check if cpufreq directory exists
+    if [[ ! -d "/sys/devices/system/cpu" ]]; then
+        log_message "ERROR: CPU frequency scaling not available"
+        exit 1
+    fi
+    
+    # Loop over each CPU's scaling_governor file
+    for cpu_path in /sys/devices/system/cpu/cpu[0-9]*/cpufreq/scaling_governor; do
+        if [[ -f "$cpu_path" ]]; then
+            cpu_count=$((cpu_count + 1))
+            cpu_name=$(basename "$(dirname "$(dirname "$cpu_path")")")
+            
+            # Check current governor
+            current_governor=$(cat "$cpu_path" 2>/dev/null || echo "unknown")
+            
+            if [[ "$current_governor" == "performance" ]]; then
+                log_message "INFO: $cpu_name already set to performance"
+                success_count=$((success_count + 1))
+            else
+                # Set to performance
+                if echo "performance" > "$cpu_path" 2>/dev/null; then
+                    log_message "SUCCESS: $cpu_name governor set to performance (was: $current_governor)"
+                    success_count=$((success_count + 1))
+                else
+                    log_message "ERROR: Failed to set $cpu_name governor to performance"
+                fi
+            fi
+        fi
+    done
+    
+    if [[ $cpu_count -eq 0 ]]; then
+        log_message "ERROR: No CPU frequency scaling governors found"
+        exit 1
+    fi
+    
+    log_message "INFO: Processed $success_count/$cpu_count CPUs successfully"
+    
+    if [[ $success_count -ne $cpu_count ]]; then
+        exit 1
+    fi
+}
+
+# Main execution
+main() {
+    log_message "INFO: Starting CPU governor configuration"
+    set_performance_governor
+    log_message "INFO: CPU governor configuration completed"
+}
+
+# Execute main function
+main "$@"
+EOF
     
     sudo chmod +x "$SCRIPT_PATH"
 
@@ -121,10 +190,39 @@ configure_script() {
 # Function to create systemd service
 create_systemd_service() {
     print_step "[2/4] Creating systemd service for application at boot..."
-    
-    sudo cp ./governor-performance.service $SERVICE_PATH
 
-    sudo chmod +x "$SERVICE_PATH"
+    sudo tee "$SERVICE_PATH" > /dev/null << 'EOF'
+[Unit]
+Description=Set CPU governor to performance at boot
+Documentation=man:cpufreq-set(1)
+After=multi-user.target
+Wants=multi-user.target
+ConditionPathExists=/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/set-performance.sh
+RemainAfterExit=yes
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=30
+
+# Security hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=no
+ProtectKernelTunables=no
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictRealtime=yes
+MemoryDenyWriteExecute=yes
+ReadWritePaths=/sys/devices/system/cpu
+
+[Install]
+WantedBy=multi-user.target
+EOF
 
     print_success "Systemd service created in $SERVICE_PATH"
 }
@@ -195,7 +293,7 @@ show_usage() {
     echo "  -s, --status    Show only current status"
     echo "  -u, --uninstall Uninstall the service"
     echo
-    echo "This script sets the CPU governor to 'performance' permanently."
+    echo "This script sets the CPU governor to 'performance'."
 }
 
 # Function to uninstall the service
@@ -222,7 +320,7 @@ uninstall_service() {
     
     # Reload systemd
     sudo systemctl daemon-reload
-    print_success "Uninstallation complete"
+    print_success "Uninstallation complete. The CPU governor will revert to its default setting on the next reboot."
 }
 
 # Main function
@@ -275,7 +373,6 @@ main() {
     print_success "✅ The 'performance' governor has been configured and will be applied automatically at each boot."
     print_step "To check the status: sudo systemctl status $SERVICE_NAME"
     print_step "To uninstall: $0 --uninstall"
-    sleep 5d
 }
 
 # Execute main function with all arguments

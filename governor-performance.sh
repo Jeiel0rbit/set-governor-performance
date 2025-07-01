@@ -33,7 +33,7 @@ readonly BLUE='\033[0;34m'
 readonly NC='\033[0m' # No Color
 
 # Constants
-readonly SERVICE_NAME="set-performance.service"
+readonly SERVICE_NAME="set-performance.sh"
 readonly SCRIPT_PATH="/usr/local/bin/${SERVICE_NAME}"
 readonly SERVICE_PATH="/etc/systemd/system/${SERVICE_NAME}"
 
@@ -123,8 +123,6 @@ create_systemd_service() {
     print_step "[2/4] Creating systemd service for application at boot..."
     
     sudo cp ./governor-performance.service $SERVICE_PATH
-
-    sudo chmod +x "$SERVICE_PATH"
 
     print_success "Systemd service created in $SERVICE_PATH"
 }
@@ -222,7 +220,7 @@ uninstall_service() {
     
     # Reload systemd
     sudo systemctl daemon-reload
-    print_success "Uninstallation complete"
+    print_success "Uninstallation complete. The CPU governor will revert to its default setting on the next reboot."
 }
 
 # Main function
@@ -275,7 +273,7 @@ main() {
     print_success "✅ The 'performance' governor has been configured and will be applied automatically at each boot."
     print_step "To check the status: sudo systemctl status $SERVICE_NAME"
     print_step "To uninstall: $0 --uninstall"
-    sleep 5d
+    read -n 1 -s -r -p "Press any key to exit..."
 }
 
 # Execute main function with all arguments

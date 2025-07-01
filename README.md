@@ -244,7 +244,7 @@ jul 01 04:05:57 mydream systemd[1]: Finished Set CPU governor to performance at 
 | File                                               | Purpose                        | Permissions     |
 | -------------------------------------------------- | ------------------------------ | --------------- |
 | `/usr/local/bin/set-performance.service`           | CPU governor management script | 755 (rwxr-xr-x) |
-| `/etc/systemd/system/governor-performance.service` | systemd service unit           | 644 (rw-r--r--) |
+| `/etc/systemd/system/set-performance.service` | systemd service unit           | 644 (rw-r--r--) |
 
 ## 🔐 Security
 
@@ -265,8 +265,6 @@ The created systemd service includes multiple security hardening measures:
 ```ini
 NoNewPrivileges=yes          # Prevents privilege escalation
 ProtectSystem=strict         # Read-only filesystem protection
-ProtectHome=yes             # Prevents access to user directories
-PrivateTmp=yes              # Isolated temporary directory
 ProtectKernelModules=yes    # Prevents kernel module loading
 RestrictRealtime=yes        # Prevents realtime scheduling
 MemoryDenyWriteExecute=yes  # Prevents code injection

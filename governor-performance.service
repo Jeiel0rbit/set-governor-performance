@@ -7,7 +7,7 @@ ConditionPathExists=/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/set-performance.service
+ExecStart=/usr/local/bin/set-performance.sh
 RemainAfterExit=yes
 StandardOutput=journal
 StandardError=journal
