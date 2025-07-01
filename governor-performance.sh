@@ -33,9 +33,9 @@ readonly BLUE='\033[0;34m'
 readonly NC='\033[0m' # No Color
 
 # Constants
-readonly SERVICE_NAME="set-performance.sh"
-readonly SCRIPT_PATH="/usr/local/bin/${SERVICE_NAME}"
-readonly SERVICE_PATH="/etc/systemd/system/${SERVICE_NAME}"
+readonly SERVICE_NAME="set-performance"
+readonly SCRIPT_PATH="/usr/local/bin/${SERVICE_NAME}.sh"
+readonly SERVICE_PATH="/etc/systemd/system/governor-performance.service"
 
 # Function to print colored messages
 print_step() {
